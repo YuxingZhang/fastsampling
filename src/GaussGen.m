@@ -8,7 +8,7 @@ Sigma2 = [2, 0; 0, 6];
 X = [];
 L = [];
 hold on;
-for i = 1:100
+for i = 1:500
     w = rand;
     if w >= w1
         X = [X mvnrnd(mu1, Sigma1)'];
