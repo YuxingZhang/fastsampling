@@ -1,6 +1,4 @@
 function [Y, test] = GibbsSampler(X, Y)
-t = cputime;
-
 % X: D x N
 % Y: 1 x N
 % N is the total number of data
@@ -15,7 +13,7 @@ D = size(X, 1);
 N_k = [];
 S_k = [];
 Xsum_k = [];
-for k = 1: K
+for k = 1 : K
     idx = (Y == k);
     X_k = X(:, idx);
     N_k = [N_k size(X_k, 2)];
@@ -35,7 +33,7 @@ alpha = K;
 % normalize p
 p = (N_k - 1 + (alpha / K)) / (N + alpha - 1);
 p = p / sum(p);
-for i = 1: l
+for i = 1 : l
 	pair = [i; p(i)];
 	if p(i) <= 1.0 / l
 		L = [L pair];
@@ -65,19 +63,24 @@ while size(L, 2) > 0
 		L = [L pair];
 	end
 end
+if size(H, 2) > 0
+    i = H(1, 1);
+    ph = H(2, 1);
+    h = i;
+    bin = [i; h; ph];
+    A = [A bin];
+end
 
 %% Now we have the table
 k_0 = 5;
 v_0 = 5;
-m_0 = [0, 0]';
-S_0 = [1, 0; 0, 1];
+m_0 = zeros(1, D)';
+S_0 = diag(ones(1, D));
 
-test = [];
 for j = 1: N
     x_n = X(:, j);
 
     %% Generate a proposal new_k from q(y)
-    %new_k = (rand >= 0.5) + 1;
     bin = randi(l);
     i = A(1, bin);
     h = A(2, bin);
@@ -88,8 +91,18 @@ for j = 1: N
         new_k = i;
     end
 
-% 	p = (N_k - 1 + (alpha / K)) / (N + alpha - 1);
-% 	p = p / sum(p);
+%     p = zeros(1, K);
+%     for k = 1:K
+%         n = N_k(1, k);
+%         k_n = k_0 + n;
+%         v_n = v_0 + n;
+%         m_n = (k_0 * m_0 + Xsum_k(:, k)) / k_n;
+%         S_n = S_0 + S_k(:, (k * D - 1) : k * D) - k_0 * (m_0 * m_0') - k_n * (m_n * m_n');
+%         p(1, k) = GIW(k_n, v_n, S_n, x_n);
+%         p(1, k) = p(1, k) * (N_k(1, k) - 1 + (alpha / K)) / (N + alpha - 1);
+%     end
+%     
+% 	p = p / sum(p)
 %     
 %     tmp = rand;
 % 	for k = 1: size(p, 2)
@@ -108,7 +121,6 @@ for j = 1: N
     new_S_n = S_0 + S_k(:, (new_k * D - 1) : new_k * D) - k_0 * (m_0 * m_0') - new_k_n * (new_m_n * new_m_n');
     
     new_p = GIW(new_k_n, new_v_n, new_S_n, x_n);
-    new_p = new_p * (new_n - 1 + (alpha / K)) / (N + alpha - 1);
 
     % Evaluate the original k
     k = Y(1, j);
@@ -119,7 +131,6 @@ for j = 1: N
     S_n = S_0 + S_k(:, (k * D - 1) : k * D) - k_0 * (m_0 * m_0') - k_n * (m_n * m_n');
     
     p = GIW(k_n, v_n, S_n, x_n);
-    p = p * (n - 1 + (alpha / K)) / (N + alpha - 1);
 
     % Evaluate r = min{1,p(yi = new_k | rest) / p(yi = k|rest) * q(k) / q(new_k)}
     r = min([new_p / p, 1]);
@@ -138,4 +149,3 @@ for j = 1: N
         N_k(1, new_k) = N_k(1, new_k) + 1;
     end
 end
-e = cputime-t

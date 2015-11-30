@@ -1,9 +1,12 @@
-load '../test.label'
-L = test;
-load '../test.data'
+load '../train.label'
+L = train';
+load '../train.data'
+data = train;
 
-dim = max(test);
-X = zeros(dim(1,1), dim(1,2));
-for i = 1 : size(test,1)
-    X(test(i, 1), test(i, 2)) = test(i, 3);
+dim = max(data);
+X = zeros(10000, dim(1,1));
+for i = 1 : size(data,1)
+    if data(i, 2) <= 10000
+        X(data(i, 2), data(i, 1)) = data(i, 3);
+    end
 end
