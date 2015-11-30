@@ -65,8 +65,14 @@ D = 2;
 for i = 1: N
     x_n = X(:, i);
 
-    % Generate a proposal new_k from q(y)
-    new_k = (rand >= 0.5) + 1;
+    %% Generate a proposal new_k from q(y)
+    %new_k = (rand >= 0.5) + 1;
+		[i; h; p] = A(:, randi(l));
+		if l * p > rand
+			new_k = h;
+		else
+			new_k = i;
+		end
     
     % Evaluate the new_k
     new_n = N_k(1, new_k);
@@ -90,6 +96,7 @@ for i = 1: N
     % Evaluate r = min{1,p(yi = new_k | rest) / p(yi = k|rest) * q(k) / q(new_k)}
     r = min([new_p / p, 1]);
     
+		%% TODO updating the counts
     % Generate s = Uniform(0; 1) and decide accept or not
     s = rand;
     if s < r
