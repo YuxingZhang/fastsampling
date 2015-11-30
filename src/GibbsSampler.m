@@ -27,9 +27,12 @@ H = [];
 A = [];
 l = K;
 alpha = K;
+
 %% P is the probability distribution on the K classes
-p = (N_k + (alpha / K)) / (N + alpha - 1);
-for i = 1: N
+p = (N_k - 1 + (alpha / K)) / (N + alpha - 1);
+% normalize p
+p = p / sum(p);
+for i = 1: l
 	pair = [i; p(i)];
 	if p(i) <= 1.0 / l
 		L = [L pair];
@@ -39,14 +42,16 @@ for i = 1: N
 end
 
 while size(L, 2) > 0
-	[i; pi] = L(:, 1);
-	L(:, 1) = []; %%TODO don't know how to delete the first column
-	[h; ph] = H(:, 1);
+	i = L(1, 1);
+    pi = L(2, 1);
+	L(:, 1) = []; %% no error checked
+	h = H(1, 1);
+    ph = H(2, 1);
 	H(:, 1) = [];
 	bin = [i; h; pi];
 	A = [A bin];
-	pair = [h; (ph - pi)];
-	if ph - pi > 1.0 / l
+	pair = [h; (ph - (1.0 / l - pi))];
+	if (ph - (1.0 / l - pi)) > 1.0 / l
 		H = [H pair];
 	else 
 		L = [L pair];
@@ -54,53 +59,55 @@ while size(L, 2) > 0
 end
 
 %% Now we have the table
-
-
-
 k_0 = 5;
 v_0 = 5;
 m_0 = [0, 0]';
 S_0 = [1, 0; 0, 1];
 D = 2;
-for i = 1: N
-    x_n = X(:, i);
+
+for j = 1: N
+    x_n = X(:, j);
 
     %% Generate a proposal new_k from q(y)
     %new_k = (rand >= 0.5) + 1;
-		[i; h; p] = A(:, randi(l));
-		if l * p > rand
-			new_k = h;
-		else
-			new_k = i;
-		end
+    bin = randi(l);
+	i = A(1, bin);
+    h = A(2, bin);
+    p = A(2, bin);
+	if l * p > rand
+		new_k = h;
+	else
+		new_k = i;
+	end
     
     % Evaluate the new_k
     new_n = N_k(1, new_k);
     new_k_n = k_0 + new_n;
     new_v_n = v_0 + new_n;
     new_m_n = (k_0 * m_0 + Xsum_k(:, new_k)) / new_k_n;
-    new_S_n = S_0 + S_k(:, new_k * D-1:new_k * D) - k_0 * m_0 * m_0' - new_k_n * new_m_n * new_m_n';
+    new_S_n = S_0 + S_k(:, new_k * D-1:new_k * D) - k_0 * (m_0 * m_0') - new_k_n * (new_m_n * new_m_n');
     
     new_p = GIW(new_k_n, new_v_n, new_S_n, x_n);
 
     % Evaluate the original k
-    k = Y(1, i);
+    k = Y(1, j);
     n = N_k(1, k);
     k_n = k_0 + n;
     v_n = v_0 + n;
     m_n = (k_0 * m_0 + Xsum_k(:, k)) / k_n;
-    S_n = S_0 + S_k(:, k * D-1:k * D) - k_0 * m_0 * m_0' - k_n * m_n * m_n';
+    S_n = S_0 + S_k(:, k * D-1:k * D) - k_0 * (m_0 * m_0') - k_n * (m_n * m_n');
     
     p = GIW(k_n, v_n, S_n, x_n);
 
     % Evaluate r = min{1,p(yi = new_k | rest) / p(yi = k|rest) * q(k) / q(new_k)}
     r = min([new_p / p, 1]);
     
-		%% TODO updating the counts
     % Generate s = Uniform(0; 1) and decide accept or not
     s = rand;
     if s < r
-        Y(1, i) = new_k;
+        Y(1, j) = new_k;
+        %% TODO updating the counts
+        N_k(1, k) = N_k(1, k) - 1;
+        N_k(1, new_k) = N_k(1, k) + 1;
     end
-
 end
