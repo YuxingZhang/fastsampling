@@ -1,14 +1,13 @@
+function [X, Y, L] = newGaussGen(K, N)
 close all;
 
-K = 2;
-N = 50;
 w = zeros(1, K);
 mu = zeros(2, K);
 Sigma = zeros(2, 2 * K);
 for i = 1:K
     w(1, i) = rand;
-    mu(:, i) = unidrnd(50, [1,2]);
-    Sigma(:, (2*i-1):2*i) = diag(unidrnd(10, [2,1]));
+    mu(:, i) = unidrnd(500, [1,2]);
+    Sigma(:, (2*i-1):2*i) = diag(unidrnd(100, [2,1]));
 end
 w = w / sum(w);
 
@@ -28,6 +27,5 @@ for i = 1:N
 end
 
 scatter(X(1,:), X(2,:));
-D = size(X, 1);
 Y = randi([1, K], 1, N);
     
